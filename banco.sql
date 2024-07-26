@@ -14,7 +14,7 @@ create table arquivo (
   nome_arquivo varchar(150) not null unique,
   formato_arquivo varchar(10) not null,
   tamanho_arquivo float not null,
-  caminho_arquivo varchar(150) not null,
+  caminho_arquivo varchar(150),
   updated_at timestamp default to_timestamp((now())::text, 'yyyy-mm-dd hh24:mi:ss'::text),
   created_at timestamp default to_timestamp((now())::text, 'yyyy-mm-dd hh24:mi:ss'::text),
   id_tipo_arquivo int references tipo_arquivo (id_tipo_arquivo),

@@ -31,7 +31,6 @@ const Arquivo = sequelize.define(
     caminhoArquivo: {
       field: 'caminho_arquivo',
       type: DataTypes.STRING(150),
-      allowNull: false,
     },
   },
   {
