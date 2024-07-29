@@ -10,19 +10,19 @@ import path from 'path';
  */
 export default async (file, params) => {
   try {
-    let extensao = path.extname(file.name);
-    let filePath = `public/${params.nomeTipoArquivo}/${params.nomeSistema}/${params.id}${extensao}`
-    let uploadPath = `${__dirname}/../../${filePath}`;
+    const extensao = path.extname(file.name);
+    const filePath = `public/${params.nomeTipoArquivo}/${params.nomeSistema}/${params.id}${extensao}`;
+    const uploadPath = `${__dirname}/../../${filePath}`;
     file.mv(uploadPath);
     return {
       type: 'success',
       message: 'Upload de arquivo realizado com sucesso',
-      path: filePath
-    }
+      path: filePath,
+    };
   } catch (error) {
     return {
       type: 'error',
       message: 'Erro ao fazer upload do arquivo',
-    }
+    };
   }
-}
+};
