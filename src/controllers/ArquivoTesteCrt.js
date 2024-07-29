@@ -50,27 +50,27 @@ async function verifyTypeFile(file) {
 }
 
 async function create(req, res) {
-  console.log(req.body);
-  const data = req.body;
-  const systemName = data.nomeSistema;
-  //const { file } = data.files[0];
-
-  const system = await verifySystem(systemName);
-  if (!system) {
-    return res.status(404).send({
-      error: 'system not found',
-    });
-  }
-
-  const extension = await verifyTypeFile(file);
-
-  if (!extension) {
-    return res.status(404).send({
-      error: 'file type not valid',
-    });
-  }
-
   try {
+    console.log(req.body);
+    const data = req.body;
+    const systemName = data.nomeSistema;
+    const file = req.files.uploadFile;
+
+    const system = await verifySystem(systemName);
+    if (!system) {
+      return res.status(404).send({
+        error: 'system not found',
+      });
+    }
+
+    const extension = await verifyTypeFile(file);
+
+    if (!extension) {
+      return res.status(404).send({
+        error: 'file type not valid',
+      });
+    }
+
     const filePath = await uploadFile(file, systemName, extension, file.name);
 
     const response = await Arquivo.create({
@@ -83,7 +83,7 @@ async function create(req, res) {
     });
     return res.status(200).send(response);
   } catch (error) {
-    return res.status(500).send({});
+    return res.status(500).send({error: error.message});
   }
 }
 
