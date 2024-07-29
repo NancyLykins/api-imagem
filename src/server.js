@@ -15,7 +15,7 @@ const accessLogStream = fs.createWriteStream(
 );
 
 app.use(fileupload({
-  createParentPath: true
+  createParentPath: true,
 }));
 
 const corsOptions = {
