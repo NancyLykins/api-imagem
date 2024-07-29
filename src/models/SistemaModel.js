@@ -1,5 +1,5 @@
 import { DataTypes } from 'sequelize';
-import { sequelize } from '../config/config';
+import sequelize from '../config/config.js';
 
 const Sistema = sequelize.define(
   'sistema',
@@ -18,8 +18,7 @@ const Sistema = sequelize.define(
     },
     secretKey: {
       field: 'secret_key',
-      type: DataTypes.STRING(255),
-      allowNull: false,
+      type: DataTypes.TEXT,
     },
   },
   {

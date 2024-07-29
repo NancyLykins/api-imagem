@@ -1,7 +1,7 @@
 create table sistema (
   id_sistema serial not null primary key,
   nome_sistema varchar(150) unique not null,
-  secret_key varchar not null
+  secret_key text
 );
 
 create table tipo_arquivo (
@@ -15,8 +15,11 @@ create table arquivo (
   formato_arquivo varchar(10) not null,
   tamanho_arquivo float not null,
   caminho_arquivo varchar(150),
+  publico boolean default true,
   updated_at timestamp default to_timestamp((now())::text, 'yyyy-mm-dd hh24:mi:ss'::text),
   created_at timestamp default to_timestamp((now())::text, 'yyyy-mm-dd hh24:mi:ss'::text),
   id_tipo_arquivo int references tipo_arquivo (id_tipo_arquivo),
   id_sistema int references sistema (id_sistema)
 );
+
+//ceom key

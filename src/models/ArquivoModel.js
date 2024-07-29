@@ -32,6 +32,10 @@ const Arquivo = sequelize.define(
       field: 'caminho_arquivo',
       type: DataTypes.STRING(150),
     },
+    publico: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: true,
+    },
   },
   {
     freezeTableName: true,

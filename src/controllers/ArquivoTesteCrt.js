@@ -1,43 +1,37 @@
 import fs from 'fs';
+import jwt from 'jsonwebtoken';
+
 import Arquivo from '../models/ArquivoModel';
 import Sistema from '../models/SistemaModel';
 import TipoArquivo from '../models/TipoArquivoModel';
 
-async function uploadFile(file, systemName, extension, fileName) {
+async function saveFile(file, systemName, extension) {
   const types = {
-    png: 'images',
-    jpg: 'images',
-    jpeg: 'images',
-    svg: 'images',
-    pdf: 'docs',
-    doc: 'docs',
-    docx: 'docs',
-    xls: 'docs',
-    xlsx: 'docs',
-    ppt: 'docs',
-    pptx: 'docs',
-    txt: 'docs',
+    png: 'imagem',
+    jpg: 'imagem',
+    jpeg: 'imagem',
+    svg: 'imagem',
+    pdf: 'documento',
+    doc: 'documento',
+    docx: 'documento',
+    xls: 'documento',
+    xlsx: 'documento',
+    ppt: 'documento',
+    pptx: 'documento',
+    txt: 'documento',
   };
   const fileType = types[extension];
   const timeStamp = new Date().getTime();
   const uploadDir = `${systemName}/${fileType}`;
   const uploadPath = `${__dirname}/../../public/${uploadDir}`;
 
-  if (!fs.existsSync(uploadPath)) { // verifica se um determinado caminho de diretório existe. Se não ele o cria, incluindo todos os diretórios necessários no caminho.
+  if (!fs.existsSync(uploadPath)) {
     fs.mkdirSync(uploadPath, { recursive: true });
   }
 
-  const path = `${uploadPath}/${timeStamp}_${fileName}`;
+  const path = `${uploadPath}/${timeStamp}_${file.name}`;
   file.mv(path);
   return path;
-}
-
-async function verifySystem(systemName) {
-  const response = await Sistema.findOne({ where: systemName });
-  if (systemName) {
-    return response;
-  }
-  return Sistema.create(systemName);
 }
 
 async function verifyTypeFile(file) {
@@ -46,44 +40,39 @@ async function verifyTypeFile(file) {
   if (response) {
     return response;
   }
-  return false;
+  return TipoArquivo.create({ formatoArquivo: fileType });
 }
 
 async function create(req, res) {
   try {
-    console.log(req.body);
-    const data = req.body;
-    const systemName = data.nomeSistema;
     const file = req.files.uploadFile;
+    // eslint-disable-next-line prefer-destructuring
+    const authorization = req.headers.authorization;
+    const token = authorization.split(' ')[1] || null;
+    const system = jwt.verify(token, process.env.SECRET_KEY);
 
-    const system = await verifySystem(systemName);
-    if (!system) {
-      return res.status(404).send({
-        error: 'system not found',
-      });
-    }
+    const systemName = await Sistema.findOne({ where: { idSistema: system.id } });
 
-    const extension = await verifyTypeFile(file);
+    // if (!system) {
+    //   return res.status(404).send({
+    //     error: 'system not found',
+    //   });
+    // }
 
-    if (!extension) {
-      return res.status(404).send({
-        error: 'file type not valid',
-      });
-    }
-
-    const filePath = await uploadFile(file, systemName, extension, file.name);
-
-    const response = await Arquivo.create({
+    const tipoArquivo = await verifyTypeFile(file);
+    const filePath = await saveFile(file, systemName, tipoArquivo.nomeTipoArquivo);
+    const arquivoSalvo = await Arquivo.create({
       nomeArquivo: file.name,
       formatoArquivo: file.type,
       tamanhoArquivo: file.size,
       caminhoArquivo: filePath,
-      idTipoArquivo: extension.id,
+      idTipoArquivo: tipoArquivo.idTipoArquivo,
       idSistema: system.id,
     });
+    const response = jwt.sign({idArquivo: arquivoSalvo.idArquivo}, process.env.SECRET_KEY);
     return res.status(200).send(response);
   } catch (error) {
-    return res.status(500).send({error: error.message});
+    return res.status(500).send({ error: error.message });
   }
 }
 
