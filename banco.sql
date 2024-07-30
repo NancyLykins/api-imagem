@@ -6,7 +6,7 @@ create table sistema (
 
 create table tipo_arquivo (
   id_tipo_arquivo serial not null primary key,
-  nome_tipo_arquivo varchar(150) not null
+  nome_tipo_arquivo varchar(150) not null // imagem | documento | video | audio
 );
 
 create table arquivo (
