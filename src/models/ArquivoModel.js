@@ -1,7 +1,8 @@
+/* eslint-disable import/extensions */
 import { DataTypes } from 'sequelize';
-import { sequelize } from '../config/config';
-import TipoArquivo from './TipoArquivoModel';
-import Sistema from './SistemaModel';
+import { sequelize } from '../config/config.js';
+import TipoArquivo from './TipoArquivoModel.js';
+import Sistema from './SistemaModel.js';
 
 const Arquivo = sequelize.define(
   'arquivo',

@@ -22,4 +22,4 @@ create table arquivo (
   id_sistema int references sistema (id_sistema)
 );
 
-//ceom key
+//ceom key: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MiwiaWF0IjoxNzIyMzYwMzM2fQ.PccqDXFD_j_CGiTdjAcYQBmTghZJqw6HgtE80x1N2oU

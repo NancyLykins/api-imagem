@@ -1,7 +1,7 @@
-import tipoArquivoRoute from './tipoArquivoRoute';
-import sistemaRoute from './sistemaRoute';
-import arquivoRoute from './arquivoRoute';
-import arquivoTeste from './arquivoTeste';
+import tipoArquivoRoute from './tipoArquivoRoute.js';
+import sistemaRoute from './sistemaRoute.js';
+import arquivoRoute from './arquivoRoute.js';
+import arquivoTeste from './arquivoTeste.js';
 
 function Routes(app) {
   tipoArquivoRoute(app);

@@ -1,9 +1,10 @@
+/* eslint-disable import/extensions */
 import fs from 'fs';
 import jwt from 'jsonwebtoken';
 
-import Arquivo from '../models/ArquivoModel';
-import Sistema from '../models/SistemaModel';
-import TipoArquivo from '../models/TipoArquivoModel';
+import Arquivo from '../models/ArquivoModel.js';
+import Sistema from '../models/SistemaModel.js';
+import TipoArquivo from '../models/TipoArquivoModel.js';
 
 async function saveFile(file, systemName, extension) {
   const types = {
@@ -51,16 +52,15 @@ async function create(req, res) {
     const token = authorization.split(' ')[1] || null;
     const system = jwt.verify(token, process.env.SECRET_KEY);
 
-    const systemName = await Sistema.findOne({ where: { idSistema: system.id } });
+    const systemName = await Sistema.findOne({ where: { id: system.id } });
 
-    // if (!system) {
-    //   return res.status(404).send({
-    //     error: 'system not found',
-    //   });
-    // }
+    if (!systemName) {
+      return res.status(404).send({ error: 'Sistema não encontrado' });
+    }
 
     const tipoArquivo = await verifyTypeFile(file);
     const filePath = await saveFile(file, systemName, tipoArquivo.nomeTipoArquivo);
+    console.log(file);
     const arquivoSalvo = await Arquivo.create({
       nomeArquivo: file.name,
       formatoArquivo: file.type,
@@ -69,7 +69,7 @@ async function create(req, res) {
       idTipoArquivo: tipoArquivo.idTipoArquivo,
       idSistema: system.id,
     });
-    const response = jwt.sign({idArquivo: arquivoSalvo.idArquivo}, process.env.SECRET_KEY);
+    const response = jwt.sign({ idArquivo: arquivoSalvo.idArquivo }, process.env.SECRET_KEY);
     return res.status(200).send(response);
   } catch (error) {
     return res.status(500).send({ error: error.message });

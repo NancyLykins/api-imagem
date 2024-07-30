@@ -1,4 +1,4 @@
-import tipoArquivo from '../controllers/tipoArquivoController';
+import tipoArquivo from '../controllers/tipoArquivoController.js';
 
 export default (app) => {
   app.post('/tipo-arquivo/persist', tipoArquivo.persist);

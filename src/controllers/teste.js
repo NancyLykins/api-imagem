@@ -1,24 +1,18 @@
-import Sistema from '../models/SistemaModel';
+import Sistema from '../models/SistemaModel.js';
 import jwt from "jsonwebtoken";
 
-const sistema = async (nomeSistema) => {
+const acharSistema = async (req, res) => {
     try {
-      if (!nomeSistema) {
-        sistema = await Sistema.create({ nomeSistema });
-      }
-  
-      let token = jwt.sign(
-        { id: sistema.id }, //payload - dados utilizados na criacao do token
-        process.env.SECRET_KEY, //chave PRIVADA da aplicação
-      );
-  
-      sistema.token = token;
-      await sistema.save();
-  
-      console.log(token);
-    } catch (error) {
-      console.log(`Error: ${error.message}`);
-    }
+      let { secretKey } = req.body;
+
+      let sistema = await Sistema.findOne({
+        where: {
+          secretKey
+        }
+      });
+      
+      if 
+      
   }
 
 sistema("ceom");

@@ -1,12 +1,17 @@
+/* eslint-disable no-underscore-dangle */
+/* eslint-disable import/extensions */
 import 'dotenv/config';
 import fs from 'fs';
 import path from 'path';
+import { fileURLToPath } from 'url';
 import morgan from 'morgan';
 import express from 'express';
 import cors from 'cors';
 import fileupload from 'express-fileupload';
-import routes from './routes';
+import routes from './routes/index.js';
 
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 const app = express();
 
 const accessLogStream = fs.createWriteStream(

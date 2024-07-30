@@ -1,4 +1,4 @@
-import arquivo from '../controllers/arquivoController';
+import arquivo from '../controllers/arquivoController.js';
 
 export default (app) => {
   app.post('/arquivo/persist', arquivo.persist);

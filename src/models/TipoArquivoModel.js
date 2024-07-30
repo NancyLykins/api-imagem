@@ -1,5 +1,5 @@
 import { DataTypes } from 'sequelize';
-import { sequelize } from '../config/config';
+import { sequelize } from '../config/config.js';
 
 const TipoArquivo = sequelize.define(
   'tipo_arquivo',

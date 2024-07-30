@@ -1,4 +1,4 @@
-import sistema from '../controllers/sistemaController';
+import sistema from '../controllers/sistemaController.js';
 
 export default (app) => {
   app.post('/sistema/persist', sistema.persist);

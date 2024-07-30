@@ -1,5 +1,6 @@
-import Arquivo from '../models/ArquivoModel';
-import TipoArquivo from '../models/TipoArquivoModel';
+/* eslint-disable import/extensions */
+import Arquivo from '../models/ArquivoModel.js';
+import TipoArquivo from '../models/TipoArquivoModel.js';
 
 const get = async (req, res) => {
   try {

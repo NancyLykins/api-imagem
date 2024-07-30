@@ -1,5 +1,6 @@
-import jwt from 'jsonwebtoken';
 import Sistema from './models/SistemaModel.js';
+import jwt from 'jsonwebtoken';
+import 'dotenv/config';
 
 const cadastrarSistema = async (nomeSistema) => {
   try {

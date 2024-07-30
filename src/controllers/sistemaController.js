@@ -1,4 +1,4 @@
-import Sistema from '../models/SistemaModel';
+import Sistema from '../models/SistemaModel.js';
 
 const get = async (req, res) => {
   try {

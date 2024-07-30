@@ -4,11 +4,12 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "dev": "env NODE_ENV=development nodemon src/index.js",
-    "sistema": "env NODE_ENV=development node src/cadastrarSistema.js"
+    "dev": "env NODE_ENV=development nodemon src/server.js",
+    "sistema": "env NODE_ENV=development node src/cadastrarSistema.mjs"
   },
   "keywords": [],
   "author": "",
+  "type": "module",
   "license": "ISC",
   "dependencies": {
     "bcrypt": "^5.1.1",
