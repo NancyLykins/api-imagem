@@ -7,6 +7,7 @@ import { fileURLToPath } from 'url';
 import Arquivo from '../models/ArquivoModel.js';
 import Sistema from '../models/SistemaModel.js';
 import TipoArquivo from '../models/TipoArquivoModel.js';
+import { log } from 'console';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -14,7 +15,6 @@ const __dirname = path.dirname(__filename);
 async function saveFile(file, systemName, fileType) {
   const timeStamp = new Date().getTime();
   const uploadDir = `${systemName}/${fileType}`;
-  console.log(`\n\n\nUPLOAD DIR: ${uploadDir}\n\n\n`);
   const uploadPath = `${__dirname}/../../public/${uploadDir}`;
 
   if (!fs.existsSync(uploadPath)) {
@@ -23,7 +23,7 @@ async function saveFile(file, systemName, fileType) {
 
   const path = `${uploadPath}/${timeStamp}_${file.name}`;
   file.mv(path);
-  return path;
+  return path.replace(`${__dirname}/../..`, '');
 }
 
 async function verifyTypeFile(file) {
@@ -45,7 +45,6 @@ async function create(req, res) {
 
     system = await Sistema.findOne({ where: { id: system.id } });
     const systemName = system.nomeSistema;
-
     if (!systemName) {
       return res.status(404).send({ error: 'Sistema não encontrado' });
     }
@@ -53,9 +52,9 @@ async function create(req, res) {
     const tipoArquivo = await verifyTypeFile(file);
     const filePath = await saveFile(file, systemName, tipoArquivo.nomeTipoArquivo);
     const extencaoArquivo = file.name.split('.').pop();
-    console.log(`FILE PATH: ${filePath},   -${filePath.length}`);
+    const fileName = filePath.split('/').pop();
     const arquivoSalvo = await Arquivo.create({
-      nomeArquivo: file.name,
+      nomeArquivo: fileName,
       formatoArquivo: extencaoArquivo,
       tamanhoArquivo: file.size,
       caminhoArquivo: filePath,
@@ -65,7 +64,7 @@ async function create(req, res) {
     const response = jwt.sign({ idArquivo: arquivoSalvo.idArquivo }, process.env.SECRET_KEY);
     return res.status(200).send(response);
   } catch (error) {
-    return res.status(500).send({ error: error.message });
+    return res.status(500).send({ error: error.message, errorA: error });
   }
 }
 
