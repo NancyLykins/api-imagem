@@ -9,7 +9,7 @@ const get = async (req, res) => {
   const response = await Arquivo.findOne({ where: { idArquivo }});
   const path = response.caminhoArquivo;
   const resolvedPath = `${process.env.API_HOST}:${process.env.API_PORT}${path}`;
-  const arquivoBase64 = null; // gerarBase64()
+  const arquivoBase64 = fileContent.toString('base64');
   return res.status(200).send({ "link" : resolvedPath, "base64": arquivoBase64 });
 };
 
