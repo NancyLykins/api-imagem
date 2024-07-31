@@ -1,267 +1,111 @@
-/* eslint-disable import/extensions */
-import Arquivo from '../models/ArquivoModel.js';
+import jwt from 'jsonwebtoken';
+import fs from 'fs';
+import path from 'path';
+import Arquivo from "../models/ArquivoModel.js";
+import { fileURLToPath } from 'url';
+import Sistema from '../models/SistemaModel.js';
 import TipoArquivo from '../models/TipoArquivoModel.js';
+import { log } from 'console';
 
-const get = async (req, res) => {
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+const getLink = async (req, res) => {
   try {
-    const idArquivo = req.params.idArquivo ? req.params.idArquivo.toString().replace(/\D/g, '') : null;
-
-    if (!idArquivo) {
-      const response = await Arquivo.findAll({
-        order: [['idArquivo', 'asc']],
-      });
-      response.forEach(arquivo => { arquivo.caminhoArquivo = arquivo.caminhoArquivo ? `${process.env.API_HOST}:${process.env.API_PORT}/${arquivo.caminhoArquivo}` : ''; });
-
-      return res.status(200).send({
-        type: 'success',
-        message: 'Lista de arquivos carregada com sucesso',
-        data: response,
-      });
-    }
-
-    const arquivo = await Arquivo.findOne({ where: { idArquivo } });
-
-    if (!arquivo) {
-      return res.status(200).send({
-        type: 'error',
-        message: `Nenhum registro com id ${idArquivo}`,
-        data: [],
-      });
-    }
-
-    arquivo.caminhoArquivo = arquivo.caminhoArquivo ? `${process.env.API_HOST}:${process.env.API_PORT}/${arquivo.caminhoArquivo}` : '';
-
-    return res.status(200).send({
-      type: 'success',
-      message: 'Registro carregado com sucesso',
-      data: arquivo,
-    });
-  } catch (error) {
-    return res.status(200).send({
-      type: 'error',
-      message: 'Ops! Ocorreu um erro',
-      error: error.message,
-    });
-  }
-};
-
-// If para verificar se o sistema existe e outro para se o tipo arquivo, caso sim criar.
-
-const create = async (dados, res) => {
-  const {
-    nomeArquivo, formatoArquivo, tamanhoArquivo, caminhoArquivo,
-    idTipoArquivo, idSistema, nomeTipoArquivo,
-  } = dados;
-
-  try {
-
-    const response = await TipoArquivo.findOne({ where: { nomeTipoArquivo } });
-
+    const token = req.query.token;
+    const decryptedToken = jwt.verify(token, process.env.SECRET_KEY);
+    const idArquivo = decryptedToken.idArquivo;
+    const response = await Arquivo.findOne({ where: { idArquivo }});
     if (!response) {
-      const tipoArquivo = await TipoArquivo.create({ nomeTipoArquivo });
-      
-      const responseArquivo = await Arquivo.create({
-        nomeArquivo,
-        formatoArquivo,
-        tamanhoArquivo,
-        caminhoArquivo,
-        idTipoArquivo,
-        idSistema,
-      });
-
-      return res.status(200).send({
-        type: 'success',
-        message: 'Cadastro realizado com sucesso',
-        data: responseArquivo,
-      });
+      return res.status(404).send({ error: 'Arquivo não encontrado' });
     }
+    const caminhoArquivo = response.caminhoArquivo;
+    const resolvedPath = `${process.env.API_HOST}:${process.env.API_PORT}${caminhoArquivo}`;
+    
+    return res.status(200).send({ link: resolvedPath });
   } catch (error) {
-    return res.status(200).send({
-      type: 'error',
-      message: 'Ops! Ocorreu um erro ao cadastrar',
-      error: error.message,
-    });
+    return res.status(500).send({ error: error.message });
   }
 };
 
-const update = async (idArquivo, dados, res) => {
+const getBase64 = async (req, res) => {
   try {
-    const response = await Arquivo.findOne({ where: { idArquivo } });
-
+    const token = req.query.token;
+    const decryptedToken = jwt.verify(token, process.env.SECRET_KEY);
+    const idArquivo = decryptedToken.idArquivo;
+    const response = await Arquivo.findOne({ where: { idArquivo }});
     if (!response) {
-      return res.status(200).send({
-        type: 'error',
-        message: `Nenhum registro com id ${idArquivo} para atualizar`,
-        data: [],
-      });
+      return res.status(404).send({ error: 'Arquivo não encontrado' });
     }
+    const caminhoArquivo = response.caminhoArquivo;
+    const filePath = path.resolve(__dirname, `../../${caminhoArquivo}`);
+    const arquivo = fs.readFileSync(filePath);
+    const arquivoBase64 = Buffer.from(arquivo).toString('base64');
 
-    Object.keys(dados).forEach((field) => {
-      response[field] = dados[field];
-    });
-
-    await response.save();
-
-    return res.status(200).send({
-      type: 'success',
-      message: `Registro id ${idArquivo} atualizado com sucesso`,
-      data: response,
-    });
+    return res.status(200).send({ base64: arquivoBase64 });
   } catch (error) {
-    return res.status(200).send({
-      type: 'error',
-      message: 'Ops! Ocorreu um erro ao atualizar',
-      error: error.message,
-    });
+    return res.status(500).send({ error: error.message });
   }
 };
 
-const persist = async (req, res) => {
+async function saveFile(file, systemName, fileType) {
+  const timeStamp = new Date().getTime();
+  const uploadDir = `${systemName}/${fileType}`;
+  const uploadPath = `${__dirname}/../../public/${uploadDir}`;
+
+  if (!fs.existsSync(uploadPath)) {
+    fs.mkdirSync(uploadPath, { recursive: true });
+  }
+
+  const path = `${uploadPath}/${timeStamp}_${file.name}`;
+  file.mv(path);
+  return path.replace(`${__dirname}/../..`, '');
+}
+
+async function verifyTypeFile(file) {
+  const fileType = file.mimetype.split('/')[0];
+  const response = await TipoArquivo.findOne({ where: { nomeTipoArquivo: fileType } });
+  if (response) {
+    return response;
+  }
+  return TipoArquivo.create({ nomeTipoArquivo: fileType });
+}
+
+async function create(req, res) {
   try {
-    const idArquivo = req.params.idArquivo ? req.params.idArquivo.toString().replace(/\D/g, '') : null;
+    const file = req.files.uploadFile;
+    // eslint-disable-next-line prefer-destructuring
+    const authorization = req.headers.authorization;
+    const token = authorization.split(' ')[1] || null;
+    let system = jwt.verify(token, process.env.SECRET_KEY);
 
-    if (!idArquivo) {
-      return await create(req.body, res);
+    system = await Sistema.findOne({ where: { id: system.id } });
+    const systemName = system.nomeSistema;
+    if (!systemName) {
+      return res.status(404).send({ error: 'Sistema não encontrado' });
     }
 
-    return await update(idArquivo, req.body, res);
+    const tipoArquivo = await verifyTypeFile(file);
+    const filePath = await saveFile(file, systemName, tipoArquivo.nomeTipoArquivo);
+    const extencaoArquivo = file.name.split('.').pop();
+    const fileName = filePath.split('/').pop();
+    const arquivoSalvo = await Arquivo.create({
+      nomeArquivo: fileName,
+      formatoArquivo: extencaoArquivo,
+      tamanhoArquivo: file.size,
+      caminhoArquivo: filePath,
+      idTipoArquivo: tipoArquivo.idTipoArquivo,
+      idSistema: system.id,
+    });
+    const response = jwt.sign({ idArquivo: arquivoSalvo.idArquivo }, process.env.SECRET_KEY);
+    return res.status(200).send({"hash": response});
   } catch (error) {
-    return res.status(200).send({
-      type: 'error',
-      message: 'Ops! Ocorreu um erro',
-      error: error.message,
-    });
+    return res.status(500).send({ error: error.message, errorA: error });
   }
-};
-
-const destroy = async (req, res) => {
-  try {
-    const idArquivo = req.params.idArquivo ? req.params.idArquivo.toString().replace(/\D/g, '') : null;
-
-    if (!idArquivo) {
-      return res.status(200).send({
-        type: 'error',
-        message: 'Informe um id para deletar o registro',
-        data: [],
-      });
-    }
-
-    const arquivo = await Arquivo.findOne({ where: { idArquivo } });
-
-    if (!arquivo) {
-      return res.status(200).send({
-        type: 'error',
-        message: `Nenhum registro com id ${idArquivo} para deletar`,
-        data: [],
-      });
-    }
-
-    await arquivo.destroy();
-
-    return res.status(200).send({
-      type: 'success',
-      message: `Registro id ${idArquivo} deletado com sucesso`,
-      data: [],
-    });
-  } catch (error) {
-    return res.status(200).send({
-      type: 'error',
-      message: 'Ops! Ocorreu um erro ao deletar',
-      error: error.message,
-    });
-  }
-};
+}
 
 export default {
-  get,
-  persist,
-  destroy,
+  getLink,
+  getBase64,
+  create,
 };
-
-/*
-  import fs from "fs";
-
-  async function create(data){
-    const systemName = data.systemName;
-    const file = data.file;
-
-    const system = verifySystem(systemName);
-    if(!system){
-      return res.status(404).send({
-        error: "system not found",
-      });
-    }
-    const fileType = verifyTypeFile(file);
-    if(!fileType){
-      return res.status(404).send({
-        error: "file type not valid",
-      });
-    }
-
-    try {
-      const !!!! = await uploadFile(file, fileType, file.name);
-      const response = await Arquivo.create({
-        nomeArquivo: file.name,
-        formatoArquivo: file.type,
-        tamanhoArquivo: file.size,
-        caminhoArquivo: path,
-        idTipoArquivo: fileType.id,
-        idSistema: system.id,
-      });
-      return res.status(200).send(response);
-    } catch (error) {
-      return res.status(500).send({});
-    }
- }
-
-  async function uploadFile(file, fileType, fileName){
-    const types = {
-      'png': 'images',
-      'jpg': 'images',
-      'jpeg': 'images',
-      'svg': 'images',
-      'pdf': 'docs',
-      'doc': 'docs',
-      'docx': 'docs',
-      'xls': 'docs',
-      'xlsx': 'docs',
-      'ppt': 'docs',
-      'pptx': 'docs',
-      'txt': 'docs',
-    };
-    fileType = types[fileType];
-    const timeStamp = new Date().getTime();
-    const uploadDir = `${systemName}/${fileType}`;
-    const uploadPath = `${__dirname}/../../public/${uploadDir}`;
-
-    if (!fs.existsSync(uploadPath)){
-      fs.mkdirSync(uploadPath, { recursive: true });
-    }
-
-    const path = `${uploadPath}/${timeStamp}_${fileName}`;
-    file.mv(path);
-  }
-
-  function verifySystem(systemName){
-    //exemplo
-    const formatedsystemName = systemName.toLowerCase().replace(' ', '_');
-    const response = select * from system where systemName = formatedSystemName;
-    if(systemName){
-      return response;
-    } else {
-      return false;
-    }
-  }
-
-  function verifyTypeFile(file){
-    const fileType = file.type;
-    const response = select * from fileType where fileType = fileType;
-    if(response){
-      return response;
-    } else {
-      return false;
-    }
-  }
-
-
-*/

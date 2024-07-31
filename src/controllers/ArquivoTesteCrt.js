@@ -62,7 +62,7 @@ async function create(req, res) {
       idSistema: system.id,
     });
     const response = jwt.sign({ idArquivo: arquivoSalvo.idArquivo }, process.env.SECRET_KEY);
-    return res.status(200).send(response);
+    return res.status(200).send({"hash": response});
   } catch (error) {
     return res.status(500).send({ error: error.message, errorA: error });
   }
